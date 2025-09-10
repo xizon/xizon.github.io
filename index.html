@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+<head>
+	<meta charset="utf-8" />
+	<title>UIUX Lab - Free and easy tools for quick build websites, focusing on the WordPress toolkit for developers and regular users.</title>	
+    
+    <meta name="description" content="Free and easy tools for quick build websites, focusing on the WordPress toolkit for developers and regular users">
+    <meta property="og:title" content="UIUX Lab">
+    <meta property="og:description" content="Free and easy tools for quick build websites, focusing on the WordPress toolkit for developers and regular users">
+    <link rel="canonical" href="https://uiux.cc">
+
+		<!-- Mobile Settings
+	============================================= -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+	<!-- Mobile Settings end -->
+
+	<!-- Vendor
+	============================================= -->
+	<script src="assets/js/wp-jquery/jquery.min.js?ver=3.3.1"></script>
+	<!-- Vendor  end -->
+
+
+	<!-- Compatibility
+	============================================= -->
+	<script src="assets/js/min/modernizr.min.js?ver=3.5.0"></script>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<!-- Compatibility  end -->
+
+
+	<!-- Web Fonts
+	============================================= -->
+
+    <style>
+        
+    @font-face {
+        font-family: 'Conv_FjallaOne-Regular';
+        src: url('assets/fonts/fjalla-one/FjallaOne-Regular.eot');
+        src: local('☺'), url('assets/fonts/fjalla-one/FjallaOne-Regular.woff') format('woff'), url('assets/fonts/fjalla-one/FjallaOne-Regular.ttf') format('truetype'), url('assets/fonts/fjalla-one/FjallaOne-Regular.svg') format('svg');
+        font-weight: normal;
+        font-style: normal;
+    }     
+
+        
+    @font-face {
+        font-family: 'Conv_almonte';
+        src: url('assets/fonts/almonte/almonte.eot');
+        src: local('☺'), url('assets/fonts/almonte/almonte.woff') format('woff'), url('assets/fonts/almonte/almonte.ttf') format('truetype'), url('assets/fonts/almonte/almonte.svg') format('svg');   
+        font-weight: normal;
+        font-style: normal;
+    }
+         
+    @font-face {
+        font-family: 'Conv_Gotham-Medium';
+        src: url('assets/fonts/gotham/Gotham-Medium.eot');
+        src: local('☺'), url('assets/fonts/gotham/Gotham-Medium.woff') format('woff'), url('assets/fonts/gotham/Gotham-Medium.ttf') format('truetype'), url('assets/fonts/gotham/Gotham-Medium.svg') format('svg');
+        font-weight: normal;
+        font-style: normal;
+    }
+   
+        
+        
+    </style>
+	<!-- Web Fonts  end -->
+
+	<!-- Core & Theme CSS
+	============================================= -->
+
+	<!-- Basic  -->
+	<link rel="stylesheet" href="assets/css/bootstrap.min.css?ver=4.2.1" media="all"/>
+	<link rel="stylesheet" href="assets/css/video.min.css?ver=7.4.1" media="all"/>
+
+
+	<!-- Icons  -->
+	<link rel="stylesheet" href="assets/fonts/fontawesome/css/all.min.css?ver=5.7.0">
+	<link rel="stylesheet" href="assets/fonts/fontawesome/css/v4-shims.min.css?ver=5.7.0">
+
+
+
+	<!-- Theme  -->
+	<link rel="stylesheet" href="../dist-main/css/uix-kit.min.css?ver=YM6dkvBjdwzFHWb27a9h"/>
+
+
+	<!--[if lt IE 10]>
+	<link rel="stylesheet" href="assets/css/IE.css?ver=YM6dkvBjdwzFHWb27a9h" />
+	<![endif]-->
+
+
+	<!-- Core & Theme CSS  end -->
+
+
+	<!-- Break free from CSS prefix hell!
+	============================================= -->
+	<script src="assets/js/min/prefixfree.min.js?ver=1.0.7"></script>
+
+
+
+	<!-- SEO
+	============================================= -->
+	<meta name="description" content="Free and easy tools for quick build websites, focusing on the WordPress toolkit for developers and regular users">
+	<meta name="generator" content="Uix Kit" />  
+	<meta name="author" content="UIUX Lab"> 
+	<!-- SEO  end -->
+
+
+	<!-- Favicons
+	============================================= -->
+	<link rel="icon" href="assets/images/favicon/favicon-32x32.png" type="image/x-icon">
+	<link rel="shortcut icon" href="assets/images/favicon/favicon-32x32.png" sizes="32x32">
+	<link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="assets/images/favicon/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="assets/images/favicon/apple-touch-icon-114x114.png">
+	<!-- Favicons  end -->
+
+    	
+
+    <script>
+    var worksData = [
+    {title: 'Funda UI', url: 'https://uiux.cc/funda-ui-doc/', cover: 'assets/images/works/funda-ui.jpg', desc: 'React components using pure Bootstrap 5+ which has undergone complex business testing and is easy to integrate with any API.'},
+    {title: 'F-Curator', url: 'https://xizon.github.io/F-Curator-Official-Website/', cover: 'assets/images/works/F-Curator.jpg', desc: 'An offline application that comes at you all day long and curates your own web favorites'},
+    {title: 'MatrixFlip', url: 'https://matrixflip.com', cover: 'assets/images/works/matrixflip.jpg', desc: 'Empowering Web Applications'},
+    {title: 'Uix Kit', url: 'https://uiux.cc/uix-kit/', cover: 'assets/images/works/uix-kit.jpg', desc: 'A free UI toolkit based on some common libraries for building beautiful responsive website, compatible with Bootstrap v5.'},         
+    {title: 'BootHelpers', url: 'https://github.com/xizon/boot-helpers', cover: 'assets/images/works/BootHelpers.jpg', desc: 'A small Vanilla JS utils alternative to jQuery.'},
+    {title: 'Uix Page Builder', url: 'https://wordpress.org/plugins/uix-page-builder/', cover: 'assets/images/works/uix-page-builder.jpg', desc: 'Uix Page Builder is a design system that it is simple content creation interface. Drag & Drop, User-friendly and online Visual Editing.'},
+    {title: 'Uix Shortcodes', url: 'https://wordpress.org/plugins/uix-shortcodes/', cover: 'assets/images/works/uix-shortcodes.jpg', desc: 'Uix Shortcodes makes it easy and quick to add the shortcode you need to achieve the page layout or function you desire. It provides easy to use over 26+ shortcodes.'},
+    // {title: 'Uix Products', url: 'https://wordpress.org/plugins/uix-products/', cover: 'assets/images/works/uix-products.jpg', desc: 'Readily organize & present your artworks, themes, plugins with Uix Products template files. Convenient for theme customization.'},
+    // {title: 'Uix Slideshow', url: 'https://wordpress.org/plugins/uix-slideshow/', cover: 'assets/images/works/uix-slideshow.jpg', desc: 'This plugin is a simple way to build, organize and display slideshow into any existing WordPress theme. Using template file to embed your theme.'},
+    // {title: 'Uix UserCenter', url: 'https://wordpress.org/plugins/uix-usercenter/', cover: 'assets/images/works/uix-usercenter.jpg', desc: 'This plugin is a simple way to build, organize and display Sign-in, registration and publishing system with AJAX into any existing WordPress theme. Using template file to embed your theme.'},
+    // {title: 'PoemKit', url: 'https://uiux.cc/poemkit', cover: 'assets/images/works/poemkit.jpg', desc: 'React toolkit for building a full website that also is a Micro-Frontend Architecture'}
+                ]
+
+    
+    </script>
+</head>  
+
+ 
+  <body class="home">
+  
+  
+	  <div class="app-detail-transitionMask" style="position: fixed; top: 0; left: 0; z-index: 99999; background: rgba(0,0,0,.7); width: 100vw; height: 100vh; display: none;"></div>
+  
+  
+	  <!-- <a style="position: fixed;z-index: 99993;top: 50px;right: 100px;" href="works-detail.html" data-ajax-push-content='{
+			  "container":"#app-ajax-popwin-page-container",
+			  "target":"#app-ajax-page-container",
+			  "loading":"<div class=\"my-loader\"><span class=\"app-loader-spinner\"></span></div>",
+			  "method":"GET"
+			  }' class="app-popwin">
+			<p class="uix-typo--p uix-typo--color-white">
+				ajax detail
+			</p>
+		</a>      
+
+	   -->
+	  
+          
+              
+    <!-- Loader
+    ============================================= -->      
+    <div class="app-loader-progress">
+        <div class="app-loader-progress__counter">
+            <span>0</span><strong>%</strong>
+        </div>
+    </div>
+      <div class="app-loader-headphone">
+            <svg viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000"><title>use headphones for the best experience</title>
+              <g><g transform="translate(0.000000,511.000000) scale(0.100000,-0.100000)"><path d="M4622.4,4218c-84.9-9.6-254.7-38.6-376.3-65.6C3063.3,3888,2075.3,3122,1529.2,2045.2c-299.1-588.5-428.4-1142.3-428.4-1839v-357l-135.1-92.6c-73.3-50.2-210.3-171.7-303-270.1c-274-287.5-449.6-623.3-530.6-1015c-50.2-243.1-40.5-702.4,21.2-930.1c216.1-795,860.6-1391.3,1659.5-1530.2c88.8-15.4,208.4-28.9,264.4-28.9h104.2l-3.9,2080.1l-5.8,2078.2l-135.1-5.8c-73.3-3.9-171.7-13.5-216.1-23.2l-83-13.5V241c0,1009.2,478.5,1989.4,1283.2,2634c860.6,686.9,2043.5,903.1,3100.9,563.4C7264.1,3073.7,8118.9,2134,8383.3,953.1c50.2-221.9,110-864.5,83-891.5c-5.8-7.7-67.5,0-133.1,17.4c-152.4,38.6-470.8,79.1-497.9,61.8c-13.5-7.7-19.3-696.6-19.3-2085.9v-2072.4h104.2c140.9,0,399.4,46.3,561.5,102.3C9340.4-3622.1,9900-2842.5,9900-1937.5c0,590.5-218.1,1099.9-646.4,1507.1l-144.7,137V82.8c0,208.4-9.6,461.2-21.2,565.4C8987.3,1578.3,8589.8,2408,7933.7,3066C7295,3704.7,6503.8,4094.5,5610.4,4212.2C5363.4,4243.1,4875.2,4247,4622.4,4218z"/></g></g>
+            </svg>
+      </div>
+
+
+    
+    <!-- Loader Complete
+    ============================================= -->      
+    <div class="app-enter-btn" data-text="Enter"></div>
+    
+
+
+
+    <!-- AJAX Transition
+    ============================================= -->    
+    <div id="app-screen-transition-mask">
+		
+		<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 1000 1000'>
+			<rect fill='#dd33bb' width='1000' height='1000' />
+			<defs>
+				<radialGradient id='a' cx='500' cy='500' r='0%' gradientUnits='userSpaceOnUse'>
+					<stop offset='0' stop-color='#dd33bb' />
+					<stop offset='1' stop-color='#404' /></radialGradient>
+				<radialGradient id='b' cx='500' cy='500' r='60%' gradientUnits='userSpaceOnUse'>
+					<stop offset='0' stop-color='#F70' stop-opacity='1' />
+					<stop offset='1' stop-color='#F70' stop-opacity='0' /></radialGradient>
+			</defs>
+			<rect fill='url(#a)' width='1000' height='1000' />
+			<g fill='none' stroke='#F6B' stroke-width='6.1' stroke-miterlimit='10' stroke-opacity='0.39'>
+				<rect x='12.5' y='12.5' width='975' height='975' />
+				<rect x='25' y='25' width='950' height='950' />
+				<rect x='37.5' y='37.5' width='925' height='925' />
+				<rect x='50' y='50' width='900' height='900' />
+				<rect x='62.5' y='62.5' width='875' height='875' />
+				<rect x='75' y='75' width='850' height='850' />
+				<rect x='87.5' y='87.5' width='825' height='825' />
+				<rect x='100' y='100' width='800' height='800' />
+				<rect x='112.5' y='112.5' width='775' height='775' />
+				<rect x='125' y='125' width='750' height='750' />
+				<rect x='137.5' y='137.5' width='725' height='725' />
+				<rect x='150' y='150' width='700' height='700' />
+				<rect x='162.5' y='162.5' width='675' height='675' />
+				<rect x='175' y='175' width='650' height='650' />
+				<rect x='187.5' y='187.5' width='625' height='625' />
+				<rect x='200' y='200' width='600' height='600' />
+				<rect x='212.5' y='212.5' width='575' height='575' />
+				<rect x='225' y='225' width='550' height='550' />
+				<rect x='237.5' y='237.5' width='525' height='525' />
+				<rect x='250' y='250' width='500' height='500' />
+				<rect x='262.5' y='262.5' width='475' height='475' />
+				<rect x='275' y='275' width='450' height='450' />
+				<rect x='287.5' y='287.5' width='425' height='425' />
+				<rect x='300' y='300' width='400' height='400' />
+				<rect x='312.5' y='312.5' width='375' height='375' />
+				<rect x='325' y='325' width='350' height='350' />
+				<rect x='337.5' y='337.5' width='325' height='325' />
+				<rect x='350' y='350' width='300' height='300' />
+				<rect x='362.5' y='362.5' width='275' height='275' />
+				<rect x='375' y='375' width='250' height='250' />
+				<rect x='387.5' y='387.5' width='225' height='225' />
+				<rect x='400' y='400' width='200' height='200' />
+				<rect x='412.5' y='412.5' width='175' height='175' />
+				<rect x='425' y='425' width='150' height='150' />
+				<rect x='437.5' y='437.5' width='125' height='125' />
+				<rect x='450' y='450' width='100' height='100' />
+				<rect x='462.5' y='462.5' width='75' height='75' />
+				<rect x='475' y='475' width='50' height='50' />
+				<rect x='487.5' y='487.5' width='25' height='25' /></g>
+			<rect fill-opacity='0.39' fill='url(#b)' width='1000' height='1000' />
+		</svg>
+
+    </div>
+
+
+
+
+    <!-- AJAX Container
+    ============================================= -->      
+    <!-- /// -->
+    <div id="app-ajax-popwin-page-mask"></div>
+    <div id="app-ajax-popwin-page-container"></div>
+    <div class="app-close-btn__wrapper">
+        <div class="app-close-btn__outer">
+          <div class="app-close-btn__inner">
+            <label class="app-close-btn__label">Back</label>
+          </div>
+        </div>
+    </div>
+
+    <!-- // ----- -->
+    <div id="app-ajax-popwin-page-mask--list"></div>
+    <div id="app-ajax-popwin-page-container--list"></div>
+    <div class="app-close-btn__wrapper--list">
+        <div class="app-close-btn__outer">
+          <div class="app-close-btn__inner">
+            <label class="app-close-btn__label">Back</label>
+          </div>
+        </div>
+    </div>
+
+
+
+    
+    <!-- Mobile Menu Toggle Trigger
+    ============================================= -->    
+	<div class="uix-menu-mobile__toggle">
+		<span></span>
+		<span></span>
+		<span></span>
+	</div>
+    <div class="uix-menu-mobile__mask"></div>
+	<!-- .uix-menu-mobile__toggle end -->
+
+			
+    
+
+  
+  
+    <div class="uix-wrapper">
+    
+        <!-- Header Area
+        ============================================= -->      
+        <header class="uix-header__container uix-header__container--overlay">
+            
+             <div class="uix-header">
+                                  
+                        <div class="uix-brand">
+                            <a href="#">
+                                <svg width="100"  xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 118.3 98.6">
+                                    <g>
+                                      <g>
+                                        <path class="cls-1" d="M42.7,38.8c-.4-.5-1.2-.6-1.7-.1-.4.4-.5,1-.3,1.5l9.6,13.7.6-3.2-8.3-11.8Z"/>
+                                        <path class="cls-1" d="M81.6,10.8c-.6-.3-1.3-.1-1.7.5,0,.1-.1.2-.1.3l-11.1,64.1-14-19.8-1.8-2.6-.7,3.7-3.2,18.5-19.4-27.5c-.4-.5-1.2-.6-1.7-.1-.4.4-.5,1-.3,1.5l20.6,29.2c.3.5,1,.7,1.6.6.6-.1,1.1-.6,1.2-1.2l3.2-18.7,13.8,19.5c.5.7,1.4.9,2.1.4.3-.2.6-.6.6-1l11.4-66.1c0-.5-.1-.9-.5-1.2Z"/>
+                                      </g>
+                                      <path class="cls-1" d="M59.6,32.9c0-.5-.1-.9-.5-1.2"/>
+                                    </g>
+                                    <g>
+                                      <g>
+                                        <path class="cls-1" d="M5.7,95.1c0,1.7-.9,2.5-2.6,2.5s-2.5-.8-2.5-2.4v-3.2h1.4v3.2c0,.9.4,1.3,1.2,1.3s1.1-.4,1.1-1.3v-3.3h1.4v3.2Z"/>
+                                        <path class="cls-1" d="M21.1,92v1h-.5v3.6h.5v1h-2.4v-1h.5v-3.6h-.5v-1h2.4Z"/>
+                                        <path class="cls-1" d="M39.1,95.1c0,1.7-.9,2.5-2.6,2.5s-2.5-.8-2.5-2.4v-3.2h1.4v3.2c0,.9.4,1.3,1.2,1.3s1.1-.4,1.1-1.3v-3.3h1.4v3.2Z"/>
+                                        <path class="cls-1" d="M57.6,97.5h-1.6l-1.1-1.8c0,0,0-.2-.1-.4h0c0,0,0,.2-.1.4l-1.1,1.8h-1.7l2-2.8-1.8-2.8h1.7l.9,1.7c0,.1.1.3.2.5h0c0-.1,0-.3.2-.5l1-1.7h1.5l-1.8,2.8,1.9,2.8Z"/>
+                                        <path class="cls-1" d="M83.8,97.5h-3.7v-5.6h1.4v4.5h2.3v1Z"/>
+                                        <path class="cls-1" d="M102.2,97.5h-1.5l-.4-1.2h-2.2l-.4,1.2h-1.5l2.2-5.6h1.6l2.2,5.6ZM99.9,95.3l-.7-1.9c0-.1,0-.3-.1-.5h0c0,.2,0,.3-.1.5l-.7,1.9h1.6Z"/>
+                                        <path class="cls-1" d="M112.7,97.5v-5.6h2.2c.7,0,1.2.1,1.6.3s.6.5.6,1-.1.6-.3.8c-.2.2-.5.4-.9.5h0c.4,0,.8.2,1,.5s.4.5.4.9c0,.5-.2.9-.6,1.2s-1,.4-1.7.4h-2.4ZM114,92.9v1.3h.6c.3,0,.5,0,.7-.2.2-.1.2-.3.2-.5,0-.4-.3-.6-1-.6h-.5ZM114,95.1v1.5h.8c.3,0,.6,0,.8-.2.2-.1.3-.3.3-.6s0-.4-.3-.5-.4-.2-.7-.2h-.8Z"/>
+                                      </g>
+                                    </g>
+                                  </svg>
+                            </a>                       
+                        </div>
+                        <!-- .uix-brand end -->
+                 
+<!-- Navigation 
+====================================================== -->
+<div class="app-topnav__wrapper scene-start">
+    <!--This block is for hamburger menu-->
+    <span>MENU</span>
+    <a href="javascript:">
+        <i class="app-topnav__bars app-topnav__bars--top"></i>
+        <i class="app-topnav__bars app-topnav__bars--middle"></i>
+        <i class="app-topnav__bars app-topnav__bars--bottom"></i>
+    </a>
+ </div>
+
+
+                  <div class="uix-clearfix"></div>
+             </div>
+        
+        </header>
+		
+		<main id="uix-maincontent">
+			
+		
+            
+			<!-- Main Scene 
+			====================================================== -->
+	
+			<canvas id="app-main"></canvas>
+
+            <!-- Scrolling Content
+            ============================================= -->  
+
+            <div class="app-scrolling-textbox__wrapper">
+                <div class="app-scrolling-textbox">
+
+                    <p>Creating website building tools and Immersive 3D art. </p>
+                    <p>Exploring practices that better the website in small ways. </p>
+                    <p>Cool Tools For Your Next Project.</p>
+                    <p>&nbsp;</p>
+                    <p>Our products are primarily built using web technology </p>
+                    <p>that improves innovative visual </p>
+                    <p>and interactive experience. </p>
+                    <p>Staying accessible also for challenged users.</p> 
+                    <p>It meets the high-quality standards of the common creative market. </p>
+                    <p>&nbsp;</p>
+                    <p>The original intention of creating UIUX Lab is </p>
+                    <p>to return to the original heart and find </p>
+                    <p>self-memories.</p>
+               
+
+                </div>
+            </div>
+            <!-- /.app-scrolling-textbox__wrapper -->
+
+
+
+            
+            
+			<!-- Home Screen 
+			====================================================== -->        
+            <div id="app-screen-home" data-tween-delay="7">
+                <div class="container">
+
+                    
+                    <div class="app-screen-home__desc">
+                        <h2>Easy Tools</h2>
+                        <p>Free and easy tools for quick build websites, focusing on the WordPress toolkit.</p>
+                    </div>
+
+                    <div class="app-screen-home__desc">
+                        <h2>Website Arts</h2>
+                        <p>Creative user interface design concepts for your websites.</p>
+                    </div>
+           
+
+
+                </div>
+
+            </div>
+            
+            
+
+            <div class="app-screen-detail">
+                <div class="container">
+
+
+                    <!-- About
+                    ====================================================== -->        
+                    <div id="app-screen-detail__about">
+                        
+                        <span class="app-deco app-deco-1"></span>
+                        <span class="app-deco app-deco-2"></span>
+                        <span class="app-deco app-deco-3"></span>
+
+                        <h3>About</h3>
+                        <p>UIUX Lab provides web products of design & development, explores website tech & UI/UX. Create and maintain products to deliver excellent user experience. Such as WordPress themes & plugins.</p>
+                        <p>Also, Our products dedicated to usable interfaces and fresh, exciting designs and more simple to use. The author carefully crafts original design assets and publishes articles about UI/UX trends, HTML5 creative theme, interactive website, freebies and premium WordPress theme.</p>
+                        
+                    </div>
+
+
+                    <!-- Contact
+                    ====================================================== -->        
+                    <div id="app-screen-detail__contact">
+                        
+
+                        <div class="app-circle-mask"></div>
+                        <h3>Contact</h3>
+                        <p>Get in touch with our award winning dedicated business team. Give us mail via <span style="background-color: #142feb;">uiuxlab@gmail.com</span> and someone from our friendly staff will reach out soon! </p>
+                        <div class="app-social-links">
+                            <a href="https://twitter.com/uiux_lab" target="_blank">
+                                <svg viewBox="0 0 100% 100%"  width="400" height="80"><text width="100%" fill="transparent" class="placeholder">Twitter</text></svg>
+                            </a>
+                            <a href="https://www.facebook.com/uiuxlabhome" target="_blank">
+                                <svg viewBox="0 0 100% 100%"  width="400" height="80"><text width="100%" fill="transparent" class="placeholder">Facebook</text></svg>
+                            </a>    
+                            <a href="https://github.com/xizon" target="_blank">
+                                <svg viewBox="0 0 100% 100%"  width="400" height="80"><text width="100%" fill="transparent" class="placeholder">Github</text></svg>
+                            </a>    
+                            <a href="https://medium.com/@uiuxlab" target="_blank">
+                                <svg viewBox="0 0 100% 100%"  width="400" height="80"><text width="100%" fill="transparent" class="placeholder">Medium</text></svg>
+                            </a>    
+                            
+                            
+                        </div>
+                        
+
+                    </div>
+
+
+                    <!-- Works
+                    ====================================================== -->        
+                    <div id="app-screen-detail__works">
+                        <span id="app-tooltip__container"></span>
+                    </div>
+             
+
+
+
+                </div>
+
+            </div>
+            
+            
+
+
+            
+			<!-- Other 
+			====================================================== -->	
+            <div style="display: none">
+                <img src="assets/textures/sprites/water-blue.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+                <img src="assets/textures/sprites/water.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+                <img src="assets/textures/sprites/planet3.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+                <img src="assets/textures/sprites/metal.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+                <img src="assets/textures/sprites/metal-env.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+                <img src="assets/textures/sprites/planet4-black.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+                <img src="assets/textures/sprites/mask.jpg?ver=YM6dkvBjdwzFHWb27a9h" alt="null">
+      
+            </div>
+            
+            <!-- cursor -->
+            <div class="app-cursor">
+                <span class="app-cursor__progress">
+                    <svg class="dot">
+                        <circle stroke="white" stroke-width="4" fill="transparent"/>
+                    </svg>  
+					
+                    <svg class="dot-back is-disabled">
+                        <circle stroke="#f00" stroke-width="4" fill="transparent"/>
+                    </svg>  			
+					
+					
+                    <svg class="circle" viewBox="0 0 42.21 42.21"><path d="M251.34,386.93V387a20.19,20.19,0,1,1,0-.15" transform="translate(-210.13 -365.75)"/></svg>
+                    <svg class="arrow" viewBox="0 0 55.62 27.13"><path class="cls-1" d="M194.84,475v.89l48.91.39-9.58,9.51,1.66,1.39,12.21-12-12.42-12.41-1.57,1.57,9.84,9.83h-49v.74" transform="translate(-193.84 -461.37)"/></svg>
+                    <svg class="back" viewBox="0 0 55.62 27.13"><path class="cls-1" d="M194.84,475v.89l48.91.39-9.58,9.51,1.66,1.39,12.21-12-12.42-12.41-1.57,1.57,9.84,9.83h-49v.74" transform="translate(-193.84 -461.37)"/></svg>
+                </span>
+            </div>
+            
+            
+            
+            <!-- sound switch -->
+            <div class="app-sound-switch"></div>
+            
+
+			
+
+		</main>
+    
+			
+		
+
+    
+        
+        
+    </div>
+    <!-- .uix-wrapper end -->
+       
+       
+    
+    <footer style="position:fixed;z-index:5;left:15px;bottom:15px;font-size:11px;color:#545454;line-height: 1.3;font-family:Conv_Gotham-Medium;">&copy; Copyright 2025 UIUX Lab<br>Powered by <a href="https://uiux.cc" target="_blank" style="text-decoration: underline;">UIUX Lab</a>&nbsp;|&nbsp;<a href="https://uiux.cc/blog" target="_blank" style="text-decoration: underline;">Blog</a></footer>
+
+    <!-- Vendor -->
+	<script src="../dist-main/js/vendor.js?ver=YM6dkvBjdwzFHWb27a9h"></script>
+
+    
+	<!-- Your Plugins & Theme Scripts
+	============================================= -->
+	
+	<script>
+		var REVISION     = "5.2.0",
+			APP_ROOTPATH = {
+				"templateUrl" : "", //If the file is in the root directory, you can leave it empty. If in another directory, you can write: "/blog"
+				"homeUrl"     : "",  //Eg. https://uiux.cc
+				"ajaxUrl"     : ""   //Eg. https://uiux.cc/wp-admin/admin-ajax.php
+			};
+    </script>  
+    <script src="../dist-main/js/uix-kit.min.js?ver=YM6dkvBjdwzFHWb27a9h"></script>
+	<!-- Your Plugins & Theme Scripts  end -->
+    
+
+	<script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    
+      ga('create', 'UA-70658525-1', 'auto');
+      ga('send', 'pageview');
+    
+
+	</script> 
+        <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+    <script>LA.init({id: "JqhmZ9lXDMYCo3aj",ck: "JqhmZ9lXDMYCo3aj"})</script>
+
+    
+
+  </body>
+</html>
+
+    
+   
