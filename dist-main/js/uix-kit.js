@@ -4,11 +4,11 @@
  * Generated with "npm run build"
  *
  * ## Project Name        :  UIUX Lab
- * ## Project Description :  Free and easy tools for quick build websites, focusing on the WordPress toolkit for developers and regular users
+ * ## Project Description :  Creating free and premium tools and custom solutions to build real-world digital products. Exploring small improvements that make a big difference.
  * ## Project URL         :  https://uiux.cc
  * ## Version             :  5.2.0
  * ## Based on            :  Uix Kit (https://github.com/xizon/uix-kit)
- * ## Last Update         :  January 16, 2025
+ * ## Last Update         :  November 19, 2026
  * ## Created by          :  UIUX Lab (https://uiux.cc) (uiuxlab@gmail.com)
  * ## Released under the MIT license.
  *
@@ -1441,9 +1441,12 @@ var VIDEOS = function (module, $, window, document) {
 ;// CONCATENATED MODULE: ./src/components/ES6/_main/js/index.js
 function js_defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, js_toPropertyKey(o.key), o); } }
 function js_createClass(e, r, t) { return r && js_defineProperties(e.prototype, r), t && js_defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function js_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = js_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function js_toPropertyKey(t) { var i = js_toPrimitive(t, "string"); return "symbol" == js_typeof(i) ? i : i + ""; }
 function js_toPrimitive(t, r) { if ("object" != js_typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != js_typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function js_classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function js_typeof(o) { "@babel/helpers - typeof"; return js_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, js_typeof(o); }
 /* 
  *************************************
@@ -1489,6 +1492,9 @@ var MAIN = function (module, $, window, document) {
     var __statusNavBallClicked = false; //Ball of navigation clicked
     var __statusBackCircleEnable = false; //circle of back interaction
     var __statusWorksSpritesMove = true; //Works Sprites Move
+    var __currentSection = null; // 当前所在场景: 'work' | 'about' | 'contact' | null
+    var __quickNavDirect = false; // 底部导航直达中：洞穴只做上下/左右位移，不做 z 轴缩放
+    var __statusQuickNavBusy = false; // 底部导航切换中（防连点）
 
     // Disable devices scaling
     //-------------------------------------	
@@ -1512,19 +1518,25 @@ var MAIN = function (module, $, window, document) {
     if ($(mouseOverlay).length == 0) {
       $('body').prepend('<div id="app-mouse-overlay" style="background-color: rgba(1, 1, 1, 0);bottom: 0;left: 0;position: fixed;right: 0;top: 0;z-index: 999999999;width: 100vw; height: 100vh;display: none;"></div>');
     }
+    var __mouseLockTimer = null,
+      __mouseLockHandler = null;
     var disableMouseClickEvent = function disableMouseClickEvent() {
       __statusDisableMouseClickEvent = true;
       $(mouseOverlay).show();
 
       //disable all click events on page
-      var handler = function handler(e) {
+      //(repeated calls restart the lock instead of letting the first timer unlock too early)
+      if (__mouseLockHandler) document.removeEventListener("pointerdown", __mouseLockHandler, true);
+      clearTimeout(__mouseLockTimer);
+      __mouseLockHandler = function __mouseLockHandler(e) {
         e.stopPropagation();
         e.preventDefault();
       };
-      document.addEventListener("pointerdown", handler, true);
-      setTimeout(function () {
+      document.addEventListener("pointerdown", __mouseLockHandler, true);
+      __mouseLockTimer = setTimeout(function () {
         $(mouseOverlay).hide();
-        document.removeEventListener("pointerdown", handler, true);
+        document.removeEventListener("pointerdown", __mouseLockHandler, true);
+        __mouseLockHandler = null;
         __statusDisableMouseClickEvent = false;
       }, 3000);
     };
@@ -1750,6 +1762,81 @@ var MAIN = function (module, $, window, document) {
       var coverContainer = new THREE.Object3D();
       var coverLine, coverLine2;
       var coverLineTempTargetReference;
+      var worksEnergyGroup = null;
+      var worksEnergyConnections = []; // edges that start on the (moving) stone surface and are updated every frame
+      var worksEnergyNet = null; // buffers of the whole network (1 mesh for all edges + 1 points object for all nodes)
+
+      // Neural-network look of the curves shown when a Portfolio stone is hovered.
+      // Layer 0: the stone  ->  Layer 1: "hub" nodes  ->  Layer 2: "leaf" nodes  (+ some cross links between neighbours)
+      var WORKS_NET = {
+        hubCount: [14, 18],
+        // [min, max] nodes connected directly to the stone
+        leafPerHub: [3, 5],
+        // [min, max] second-layer nodes per hub
+        crossLinks: 28,
+        // extra links between nearby nodes (the "mesh" feel)
+        hubMinDistance: 145,
+        // keep hubs apart from each other
+        leafDistance: [100, 260],
+        // distance hub -> leaf
+        crossDistance: [75, 360],
+        // allowed length of a cross link
+        space: {
+          x: 640,
+          y: 490,
+          z: 190
+        },
+        // half size of the area around the portfolio
+        divisions: 32,
+        // smoothness of each curve
+        // Line thickness in SCREEN PIXELS (core + glow). Bigger = thicker / glowier.
+        widthPx: {
+          primary: 16,
+          secondary: 11,
+          cross: 7
+        },
+        // Brightness of each layer
+        boost: {
+          primary: 1.0,
+          secondary: 0.82,
+          cross: 0.52
+        },
+        // Node size in pixels (diameter incl. glow)
+        nodePx: {
+          hub: 34,
+          leaf: 21
+        },
+        speed: [0.14, 0.34] // signal speed (loops per second)
+      };
+
+      // uniforms shared by every material of the network
+      var worksEnergyUniforms = {
+        uTime: {
+          value: 0
+        },
+        uResolution: {
+          value: new THREE.Vector2(1, 1)
+        },
+        uDepthRef: {
+          value: 300
+        } // camera -> stone distance, used to make near strands slightly thicker
+      };
+      var worksNetShaders = {
+        lineVS: ['uniform vec2 uResolution;', 'uniform float uDepthRef;', 'attribute vec3 aTangent;', 'attribute vec3 aColor;', 'attribute float aSide;', 'attribute float aProg;', 'attribute vec4 aParams;',
+        // x: phase, y: speed, z: width(px), w: brightness
+        'varying vec3 vColor;', 'varying float vSide;', 'varying float vProg;', 'varying vec4 vParams;', 'void main() {', '    vec4 mv  = modelViewMatrix * vec4( position, 1.0 );', '    vec4 mvT = modelViewMatrix * vec4( position + aTangent * 5.0, 1.0 );', '    vec4 a = projectionMatrix * mv;', '    vec4 b = projectionMatrix * mvT;', '    vec2 pa = a.xy / a.w;', '    vec2 pb = b.xy / b.w;', '    vec2 dir = ( pb - pa ) * uResolution;',
+        // direction in pixels
+        '    float l = length( dir );', '    dir = l > 0.0001 ? dir / l : vec2( 1.0, 0.0 );', '    vec2 perp = vec2( -dir.y, dir.x );', '    float depthScale = clamp( uDepthRef / max( -mv.z, 1.0 ), 0.6, 1.5 );', '    float w = aParams.z * depthScale;', '    vec2 offsetNdc = perp * aSide * w / uResolution;',
+        // half width (w*0.5) * 2 / res
+        '    gl_Position = vec4( ( pa + offsetNdc ) * a.w, a.z, a.w );', '    vColor = aColor;', '    vSide = aSide;', '    vProg = aProg;', '    vParams = aParams;', '}'].join('\n'),
+        lineFS: ['uniform float uTime;', 'uniform float uOpacity;', 'varying vec3 vColor;', 'varying float vSide;', 'varying float vProg;', 'varying vec4 vParams;', 'void main() {', '    float d = abs( vSide );', '    float core = smoothstep( 0.30, 0.0, d );',
+        // thin bright centre
+        '    float halo = pow( 1.0 - d, 2.2 );',
+        // soft glow around it
+        '    float head = fract( uTime * vParams.y + vParams.x );', '    float p1 = vProg - head;', '    p1 -= floor( p1 + 0.5 );', '    float p2 = vProg - head - 0.5;', '    p2 -= floor( p2 + 0.5 );', '    float pulse = max( exp( -p1 * p1 * 600.0 ), exp( -p2 * p2 * 600.0 ) );', '    float breathe = 0.9 + 0.1 * sin( uTime * 2.0 + vParams.x * 6.2831 );', '    float energy = vParams.w * breathe * ( 0.55 + 2.0 * pulse );', '    float fadeStart = smoothstep( 0.0, 0.05, vProg );', '    float alpha = clamp( ( core + halo * 0.55 ) * energy, 0.0, 1.0 ) * uOpacity * fadeStart;', '    vec3 col = mix( vColor, vec3( 1.0 ), core * ( 0.30 + 0.55 * pulse ) );', '    gl_FragColor = vec4( col * ( 0.85 + 0.9 * pulse ), alpha );', '}'].join('\n'),
+        nodeVS: ['uniform float uTime;', 'uniform float uDepthRef;', 'attribute vec3 aColor;', 'attribute float aSize;', 'attribute float aPhase;', 'varying vec3 vColor;', 'varying float vTw;', 'void main() {', '    vec4 mv = modelViewMatrix * vec4( position, 1.0 );', '    vTw = 0.82 + 0.18 * sin( uTime * 3.2 + aPhase * 6.2831 );', '    vColor = aColor;', '    float depthScale = clamp( uDepthRef / max( -mv.z, 1.0 ), 0.6, 1.5 );', '    gl_PointSize = aSize * depthScale * vTw;', '    gl_Position = projectionMatrix * mv;', '}'].join('\n'),
+        nodeFS: ['uniform float uOpacity;', 'varying vec3 vColor;', 'varying float vTw;', 'void main() {', '    float r = length( gl_PointCoord - 0.5 ) * 2.0;', '    if ( r > 1.0 ) discard;', '    float core = smoothstep( 0.32, 0.0, r );', '    float halo = pow( 1.0 - r, 2.4 );', '    float a = clamp( core + halo * 0.7, 0.0, 1.0 ) * uOpacity;', '    vec3 col = mix( vColor, vec3( 1.0 ), core * 0.85 );', '    gl_FragColor = vec4( col, a );', '}'].join('\n')
+      };
 
       // root background
       var skyBox;
@@ -1774,6 +1861,37 @@ var MAIN = function (module, $, window, document) {
         INTERSECTED,
         collisionElements = [];
 
+      // Use the original model bounds as a block-like fallback for navigation and balls.
+      // Real mesh intersections always take priority; bounds are not expanded.
+      var getNavigationIntersections = function getNavigationIntersections(objects) {
+        var directHits = raycaster.intersectObjects(objects);
+        if (directHits.length) return directHits;
+        var boundsHits = [];
+        var hitPoint = new THREE.Vector3();
+        objects.forEach(function (object) {
+          if (!object || !(object.name.indexOf('nucleus__menuball-') >= 0 || object.name.indexOf('nucleus__menu-') >= 0)) return;
+          object.updateMatrixWorld(true);
+          var bounds = new THREE.Box3().setFromObject(object);
+          if (bounds.isEmpty()) return;
+
+          // Use the object's original world-space bounds without expanding them.
+          // This fills hollow areas inside text/meshes while keeping the hit
+          // region within the model's actual maximum width, height and depth.
+          var point = raycaster.ray.intersectBox(bounds, hitPoint.clone());
+          if (point) {
+            boundsHits.push({
+              distance: camera.position.distanceTo(point),
+              point: point,
+              object: object
+            });
+          }
+        });
+        boundsHits.sort(function (a, b) {
+          return a.distance - b.distance;
+        });
+        return boundsHits;
+      };
+
       //collision interaction for works
       var intersects_works, INTERSECTED_WORKS;
 
@@ -1781,6 +1899,10 @@ var MAIN = function (module, $, window, document) {
       var ballOfNavGroup = new THREE.Object3D();
       var flyingBallGroup = new THREE.Object3D();
       var pinprickBallGroup = new THREE.Object3D();
+      var contactOrbitGroup = new THREE.Object3D();
+      var contactOrbitRings = [],
+        contactOrbitParticles = [],
+        __statusContactOrbitActive = false;
       var glowAnimMaterial = new THREE.ShaderMaterial({
         uniforms: {
           "c": {
@@ -1950,6 +2072,9 @@ var MAIN = function (module, $, window, document) {
           shotCloseContact();
           shotCloseWorks();
 
+          //show the quick navigation again (we are back home)\n                        
+          quickNavToggle(true);
+
           //update circle of back status
           __statusBackCircleEnable = false;
         }
@@ -2031,6 +2156,224 @@ var MAIN = function (module, $, window, document) {
       }).on('pointerleave', function (e) {
         this.style.transform = '';
       });
+
+      // Quick Navigation (bottom center): Portfolio / About / Contact
+      //-------------------------------------
+      // key 对应 navBallAtoms 的下标: 0 = work, 1 = about, 2 = contact
+      var quickNavConfig = {
+        work: {
+          label: 'Portfolio',
+          ballIndex: 0,
+          shot: function shot() {
+            shotWorks();
+          }
+        },
+        about: {
+          label: 'About',
+          ballIndex: 1,
+          shot: function shot() {
+            shotAbout();
+          }
+        },
+        contact: {
+          label: 'Contact',
+          ballIndex: 2,
+          shot: function shot() {
+            shotContact();
+          }
+        }
+      };
+
+      // CSS（也可以挪到 scss 里）。z-index 低于 #app-mouse-overlay(999999999)，
+      // 这样过场锁定点击时导航同样会被遮罩挡住；同时高于画布和各内容层。
+      if ($('#app-quicknav-style').length == 0) {
+        $('head').append('<style id="app-quicknav-style">' + '#app-quicknav{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:9990;display:flex;gap:clamp(18px,4vw,44px);opacity:0;pointer-events:none;transition:opacity .8s ease;}' + '#app-quicknav.is-ready{opacity:1;pointer-events:auto;}' + '#app-quicknav.is-busy button{opacity:.35;pointer-events:none;}' + '#app-quicknav button{all:unset;box-sizing:border-box;position:relative;cursor:pointer;padding:10px 6px;font-size:12px;line-height:1;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);transition:color .3s ease,opacity .3s ease;-webkit-tap-highlight-color:transparent;}' + '#app-quicknav button::after{content:"";position:absolute;left:6px;right:6px;bottom:3px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s ease;}' + '#app-quicknav button:hover,#app-quicknav button.is-active{color:#fff;}' + '#app-quicknav button:hover::after,#app-quicknav button.is-active::after{transform:scaleX(1);}' + '#app-quicknav button:focus-visible{outline:1px solid rgba(255,255,255,.7);outline-offset:2px;}' + '</style>');
+      }
+      if ($('#app-quicknav').length == 0) {
+        var _quickNavHTML = '<nav id="app-quicknav" aria-label="Quick navigation">';
+        Object.keys(quickNavConfig).forEach(function (key) {
+          _quickNavHTML += '<button type="button" data-target="' + key + '">' + quickNavConfig[key].label + '</button>';
+        });
+        _quickNavHTML += '</nav>';
+        $('body').append(_quickNavHTML);
+      }
+      $('#app-quicknav').on('click', 'button', function (e) {
+        e.preventDefault();
+        quickNavGo($(this).data('target'));
+      }).on('pointerenter', 'button', function () {
+        $cursor.addClass('is-hover');
+      }).on('pointerleave', 'button', function () {
+        $cursor.removeClass('is-hover');
+      });
+
+      /*
+       * Show / hide the quick navigation
+       *
+       * @param  {Boolean} show
+       * @return {Void}
+       */
+      function quickNavToggle(show) {
+        $('#app-quicknav').toggleClass('is-ready', !!show);
+      }
+
+      /*
+       * Highlight the current section
+       *
+       * @param  {?String} name   - 'work' | 'about' | 'contact' | null
+       * @return {Void}
+       */
+      function quickNavSetActive(name) {
+        $('#app-quicknav button').each(function () {
+          $(this).toggleClass('is-active', $(this).data('target') === name);
+        });
+
+        // Entering a section (from the bottom nav OR from the 3D menu): hide the quick navigation.
+        // It is shown again in sceneReset() once the scene is back home.
+        if (name) quickNavToggle(false);
+      }
+
+      /*
+       * Enter a section. Same sequence as clicking a 3D menu text.
+       * Must only be called while the 3D menu is open (nav has "scene-start").
+       *
+       * @param  {String} name
+       * @return {Void}
+       */
+      function quickNavEnterSection(name) {
+        var cfg = quickNavConfig[name];
+        if (!cfg) return;
+
+        //change ball of navigation's object position
+        destinationPosOfBallNav = navBallAtoms[cfg.ballIndex].origData;
+
+        //disable scene move
+        __statusSceneMove = false;
+
+        //action
+        cfg.shot();
+
+        //navigation
+        menuToggle('close-onlynav');
+
+        //active body class
+        $('body').addClass('primarymenu-active');
+
+        //remember current section
+        __currentSection = name;
+        quickNavSetActive(name);
+
+        //change camera position
+        TweenMax.to(camera.position, 2, {
+          x: destinationPosOfBallNav.x,
+          y: destinationPosOfBallNav.y,
+          z: destinationPosOfBallNav.z + 100,
+          onUpdate: function onUpdate() {
+            camera.up.set(0, 1, 0);
+            camera.updateProjectionMatrix();
+          }
+        });
+      }
+
+      /*
+       * Home -> section, WITHOUT showing the 3D menu scene.
+       * Does the "home part" of navEnterEvent() / menuToggle('open') (hide brand, top nav,
+       * balls, home text) and then enters the section.
+       *
+       * @param  {String} name
+       * @return {Void}
+       */
+      function quickNavEnterFromHome(name) {
+        disableMouseClickEvent();
+        __statusSceneMove = false;
+        __statusNavBallClicked = false;
+
+        //hide brand & top navigation
+        $(brandID).removeClass('scene-end').addClass('scene-start');
+        $(navID).removeClass('scene-end').addClass('scene-start');
+
+        //Ball of Navigation / flying balls
+        ballOfNavControl('close', -1);
+        ballsControl('close');
+
+        //home texts
+        $(mainTextSliderID).addClass('is-click');
+        setTimeout(function () {
+          animeForText(false, false);
+        }, 1000);
+
+        //Enter the section right away. The main cave is NOT shrunk / flown away first any more:
+        //with __quickNavDirect on, shotWorks / shotAbout / shotContact only slide it up / down / sideways.
+        __quickNavDirect = true;
+        try {
+          quickNavEnterSection(name);
+        } finally {
+          __quickNavDirect = false;
+        }
+      }
+
+      /*
+       * Wait until the section content is ready (the "back" circle gets enabled by shotX),
+       * so a new switch can never interrupt the delayed content animations of the previous one.
+       *
+       * @param  {Function} done
+       * @return {Void}
+       */
+      function quickNavWaitReady(done) {
+        var _tries = 0;
+        var _timer = setInterval(function () {
+          _tries++;
+          if (__statusBackCircleEnable || _tries > 80) {
+            // 80 * 100ms = 8s safety timeout
+            clearInterval(_timer);
+            done();
+          }
+        }, 100);
+      }
+
+      /*
+       * Go to a section from ANY state, never showing the 3D menu scene:
+       *   1. home            -> fade out home -> section
+       *   2. 3D menu open    -> section (the menu is already there)
+       *   3. inside section  -> reset scene (same as hold-to-back) -> fade out home -> section
+       *
+       * @param  {String} name
+       * @return {Void}
+       */
+      function quickNavGo(name) {
+        if (!quickNavConfig[name]) return;
+        if (!__statusSceneClickEnable) return; // loader not finished
+        if (__statusDisableMouseClickEvent || __statusQuickNavBusy) return; // transition running
+        if (__currentSection === name) return; // already here
+
+        var inSection = $('body').hasClass('primarymenu-active');
+        var menuOpen = $(navID).hasClass('scene-start');
+        __statusQuickNavBusy = true;
+        $('#app-quicknav').addClass('is-busy');
+        var unlock = function unlock() {
+          __statusQuickNavBusy = false;
+          $('#app-quicknav').removeClass('is-busy');
+        };
+        if (inSection) {
+          // leave current section: identical to the "hold to back" flow
+          disableMouseClickEvent();
+          if (__statusBackCircleEnable) backCircleHide();
+          __statusBackCircleEnable = false;
+          sceneReset(function () {
+            // runs when the camera is back home
+            quickNavEnterFromHome(name);
+            quickNavWaitReady(unlock);
+          });
+          shotCloseAbout();
+          shotCloseContact();
+          shotCloseWorks();
+        } else if (menuOpen) {
+          quickNavEnterSection(name);
+          quickNavWaitReady(unlock);
+        } else {
+          quickNavEnterFromHome(name);
+          quickNavWaitReady(unlock);
+        }
+      }
 
       // Social Links
       //-------------------------------------	
@@ -2173,7 +2516,7 @@ var MAIN = function (module, $, window, document) {
           r: lightWorksColor.r,
           g: lightWorksColor.g,
           b: lightWorksColor.b,
-          onComplate: function onComplate() {
+          onComplete: function onComplete() {
             lights[4].visible = true;
           }
         });
@@ -2359,6 +2702,7 @@ var MAIN = function (module, $, window, document) {
         requestAnimationFrame(render);
         var delta = clock.getDelta();
         time += delta;
+        updateWorksEnergyConnections(time);
 
         //---
         // 
@@ -2452,7 +2796,7 @@ var MAIN = function (module, $, window, document) {
         //---
         // 
         // Animation of about sprites 
-        if (aboutContainer) {
+        if (aboutContainer && (!uniformsAboutContainer || uniformsAboutContainer.uAlpha.value > 0.001)) {
           aboutContainer.geometry.vertices.forEach(function (el, index) {
             el.normalize().multiplyScalar(0.15 * simplex.noise3D(el.x * 0.4 + Date.now() * 0.0001, el.y * 0.4, el.z * 0.4) + 1);
           });
@@ -2509,31 +2853,33 @@ var MAIN = function (module, $, window, document) {
         intersects_works = raycaster.intersectObjects(modalObjSubStoneForWorks.children, true);
         if (intersects_works.length > 0) {
           if (INTERSECTED_WORKS != intersects_works[0].object) {
+            if (INTERSECTED_WORKS && !INTERSECTED_WORKS.name.includes('nucleus__worktitle-')) {
+              var previousTarget = INTERSECTED_WORKS.parent.parent.parent.parent;
+              resetWorksStoneHover(previousTarget);
+              hideWorksEnergyConnections();
+            }
             if (!intersects_works[0].object.name.includes('nucleus__worktitle-')) {
               var _target = intersects_works[0].object.parent.parent.parent.parent;
               if (_target !== null) {
                 console.log('onPointerMove: ', _target.name);
                 INTERSECTED_WORKS = intersects_works[0].object;
 
-                //hover effect
-                TweenMax.to(_target.scale, .3, {
-                  x: 180,
-                  y: 180,
-                  z: 180
-                });
+                //hover effect: scale up and add an energized rotation
+                animateWorksStoneHover(_target);
+                showWorksEnergyConnections(_target);
 
                 //cursor interaction
                 $cursor.addClass('is-hover');
 
                 //cover interaction
-                var _objCover = scene.getObjectByName('nucleus__workcover-' + _target.targetid);
+                // Hide the upper-right cover polyhedron while a work stone is hovered.
+                // The energy connections now provide the visual source/flow effect.
                 coverContainer.children.forEach(function (child) {
                   child.visible = false;
                 });
-                _objCover.visible = true;
                 coverLineTempTargetReference = _target;
-                coverLine.visible = true;
-                coverLine2.visible = true;
+                coverLine.visible = false;
+                coverLine2.visible = false;
 
                 //description interaction
                 var screenData = nestedObjectToScreenXYZAndWH(_target, camera, renderer.domElement.width, renderer.domElement.height);
@@ -2552,12 +2898,9 @@ var MAIN = function (module, $, window, document) {
           if (INTERSECTED_WORKS) {
             var _target2 = INTERSECTED_WORKS.parent.parent.parent.parent;
             if (_target2 !== null) {
-              //hover effect
-              TweenMax.to(_target2.scale, .3, {
-                x: _target2.origData.sx,
-                y: _target2.origData.sy,
-                z: _target2.origData.sz
-              });
+              //hover effect: smoothly restore the original stone transform
+              resetWorksStoneHover(_target2);
+              hideWorksEnergyConnections();
 
               //cursor interaction
               $cursor.removeClass('is-hover');
@@ -2612,17 +2955,21 @@ var MAIN = function (module, $, window, document) {
           });
         }
 
-        //--
-        pinprickBallAtoms.forEach(function (el, index) {
-          el.position.x += -5 * el.speed * .2;
-          if (el.position.x < -xLimit - 80) {
-            // check if the particle is out of the field of view
-
-            //remove a mesh completely from the scene
-            //el.position.x = el.position.origData.x;
-            el.position.x = xLimit / 2;
-          }
-        });
+        //-- Contact ambient orbital rings & subtle drifting dust
+        if (__statusContactOrbitActive && contactOrbitGroup.visible) {
+          contactOrbitRings.forEach(function (ring, idx) {
+            ring.rotation.z += delta * ring.userData.spinZ;
+            ring.rotation.x = ring.userData.baseRx + Math.sin(time * 0.6 + idx) * 0.08;
+            ring.rotation.y = ring.userData.baseRy + Math.cos(time * 0.5 + idx) * 0.08;
+          });
+          contactOrbitParticles.forEach(function (p) {
+            p.userData.theta += delta * p.userData.speed;
+            var r = p.userData.radius;
+            p.position.x = Math.cos(p.userData.theta) * r;
+            p.position.y = Math.sin(p.userData.theta) * r * 0.62;
+            p.position.z = Math.sin(p.userData.theta * 1.5 + p.userData.phase) * 16;
+          });
+        }
 
         //---
         // 
@@ -2661,9 +3008,15 @@ var MAIN = function (module, $, window, document) {
         //Add collision elements from the stage to the sensing object
         collisionElements = navBallAtoms.concat(menuTextFillContainer.children).concat(menuTextStrokeContainer.children);
         if (audioPoints.length > 0) collisionElements = collisionElements.concat(audioPlane);
-        intersects = raycaster.intersectObjects(collisionElements);
+        intersects = getNavigationIntersections(collisionElements);
         if (intersects.length > 0) {
           if (INTERSECTED != intersects[0].object && __statusLoaderRemoveEnd) {
+            // Restore the previous navigation ball when moving directly to another object.
+            if (INTERSECTED && INTERSECTED.name.indexOf('nucleus__menuball-') >= 0) {
+              // resetNavBallHover( INTERSECTED );
+              INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+              INTERSECTED.material.wireframe = false;
+            }
             INTERSECTED = intersects[0].object;
 
             //console.log( INTERSECTED.name );
@@ -2675,6 +3028,9 @@ var MAIN = function (module, $, window, document) {
             //++++++++++++++++++++++++++++++++++++++
             //each item of Ball of Navigation from scene
             if (INTERSECTED.name.indexOf('nucleus__menuball-') >= 0) {
+              // Liquid-like hover motion for the active navigation ball.
+              animateNavBallHover(INTERSECTED);
+
               //--- change object material color and styles
               if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
               INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
@@ -2730,6 +3086,11 @@ var MAIN = function (module, $, window, document) {
             //++++++++++++++++++++++++++++++++++++++
             //each item of Ball of Navigation from scene
             if (INTERSECTED.name.indexOf('nucleus__menuball-') >= 0) {
+              // Stop the liquid motion and restore the ball's original transform.
+              // resetNavBallHover( INTERSECTED );
+
+              // Restore material only. Shape animation resets automatically after 3 seconds.
+
               //--- restore previous intersection object (if it exists) to its original color
               INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
               INTERSECTED.material.wireframe = false;
@@ -2870,7 +3231,7 @@ var MAIN = function (module, $, window, document) {
 
         //Add collision elements from the stage to the sensing object
         collisionElements = navBallAtoms.concat(audioPlane).concat(menuTextFillContainer.children).concat(menuTextStrokeContainer.children);
-        intersects = raycaster.intersectObjects(collisionElements);
+        intersects = getNavigationIntersections(collisionElements);
 
         //++++++++++++++++++++++++++++++++++++++
         //++++++++++++++++++++++++++++++++++++++
@@ -2908,6 +3269,8 @@ var MAIN = function (module, $, window, document) {
               case 'nucleus__menu-work':
                 //change ball of navigation's object position
                 destinationPosOfBallNav = navBallAtoms[0].origData;
+                __currentSection = 'work';
+                quickNavSetActive('work');
 
                 //disable scene move
                 __statusSceneMove = false;
@@ -2938,6 +3301,8 @@ var MAIN = function (module, $, window, document) {
               case 'nucleus__menu-about':
                 //change ball of navigation's object position
                 destinationPosOfBallNav = navBallAtoms[1].origData;
+                __currentSection = 'about';
+                quickNavSetActive('about');
 
                 //disable scene move
                 __statusSceneMove = false;
@@ -2960,6 +3325,8 @@ var MAIN = function (module, $, window, document) {
               case 'nucleus__menu-contact':
                 //change ball of navigation's object position
                 destinationPosOfBallNav = navBallAtoms[2].origData;
+                __currentSection = 'contact';
+                quickNavSetActive('contact');
 
                 //disable scene move
                 __statusSceneMove = false;
@@ -3036,6 +3403,9 @@ var MAIN = function (module, $, window, document) {
       }
       function onPointerUp(e) {
         e.preventDefault();
+
+        //ignore clicks coming from the quick navigation
+        if (e.target && e.target.closest && e.target.closest('#app-quicknav')) return;
         if (__statusSceneClickEnable) {
           if (intersects_works.length > 0) {
             if (!intersects_works[0].object.name.includes('nucleus__worktitle-')) {
@@ -3045,6 +3415,487 @@ var MAIN = function (module, $, window, document) {
             }
           }
         }
+      }
+
+      /*
+       * Portfolio and navigation hover effects.
+       * These helpers only affect hover visuals; click behavior stays unchanged.
+       */
+      function disposeWorksEnergyConnections() {
+        if (!worksEnergyGroup) return;
+        worksEnergyGroup.children.forEach(function (child) {
+          if (child.geometry && child.geometry.dispose) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(function (material) {
+                material.dispose();
+              });
+            } else if (child.material.dispose) {
+              child.material.dispose();
+            }
+          }
+        });
+        if (worksEnergyGroup.parent) worksEnergyGroup.parent.remove(worksEnergyGroup);
+        worksEnergyGroup = null;
+        worksEnergyConnections = [];
+        worksEnergyNet = null;
+      }
+      function showWorksEnergyConnections(stone) {
+        if (!stone || !modalObjSubStoneForWorks) return;
+        disposeWorksEnergyConnections();
+        worksEnergyGroup = new THREE.Object3D();
+        worksEnergyGroup.name = 'works-energy-connections';
+        worksEnergyGroup.visible = true;
+        scene.add(worksEnergyGroup);
+        var cfg = WORKS_NET;
+        var rand = function rand(min, max) {
+          return min + Math.random() * (max - min);
+        };
+        var randInt = function randInt(range) {
+          return Math.floor(rand(range[0], range[1] + 1));
+        };
+        var randVec = function randVec(scale) {
+          return new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(scale);
+        };
+        var stoneCenter = stone.getWorldPosition(new THREE.Vector3());
+        var portfolioCenter = modalObjSubStoneForWorks.getWorldPosition(new THREE.Vector3());
+        var bounds = new THREE.Box3().setFromObject(stone);
+        var sphere = bounds.getBoundingSphere(new THREE.Sphere());
+        // Keep the strand origin on the visible stone surface (same idea as before).
+        var sourceCenterOffset = sphere.center.clone().sub(stoneCenter);
+        var sourceRaycaster = new THREE.Raycaster();
+        worksEnergyUniforms.uDepthRef.value = Math.max(camera.position.distanceTo(stoneCenter), 1);
+
+        // ---------- palette ----------
+        var C = [0x35eaff, 0x438dff, 0x9b70ff, 0xff69c8].map(function (hex) {
+          return new THREE.Color(hex);
+        });
+        var gradients = {
+          primary: [C[0], C[1], C[2]],
+          // cyan -> blue -> violet   (stone -> hub)
+          secondary: [C[2], C[3]],
+          // violet -> pink           (hub -> leaf)
+          cross: [C[1], C[3]] // blue -> pink
+        };
+        var sampleGradient = function sampleGradient(stops, t) {
+          var gp = t * (stops.length - 1);
+          var i = Math.min(Math.floor(gp), stops.length - 2);
+          return stops[i].clone().lerp(stops[i + 1], gp - i);
+        };
+
+        // ---------- 1. nodes ----------
+        var space = cfg.space;
+        var clampToSpace = function clampToSpace(p) {
+          p.x = Math.max(portfolioCenter.x - space.x * 1.05, Math.min(portfolioCenter.x + space.x * 1.05, p.x));
+          p.y = Math.max(portfolioCenter.y - space.y * 1.05, Math.min(portfolioCenter.y + space.y * 1.05, p.y));
+          p.z = Math.max(portfolioCenter.z - space.z * 1.05, Math.min(portfolioCenter.z + space.z * 1.05, p.z));
+          return p;
+        };
+        var nodes = [];
+        var makeNode = function makeNode(pos, kind) {
+          var node = {
+            id: nodes.length,
+            pos: pos,
+            kind: kind,
+            color: (kind === 'hub' ? C[2] : C[3]).clone().lerp(new THREE.Color(0xffffff), 0.25),
+            phase: Math.random()
+          };
+          nodes.push(node);
+          return node;
+        };
+        var hubs = [];
+        var hubCount = randInt(cfg.hubCount);
+        var _loop = function _loop() {
+          var p = new THREE.Vector3(portfolioCenter.x + rand(-1, 1) * space.x, portfolioCenter.y + rand(-1, 1) * space.y, portfolioCenter.z + rand(-1, 1) * space.z);
+          if (hubs.every(function (h) {
+            return h.pos.distanceTo(p) >= cfg.hubMinDistance;
+          })) {
+            hubs.push(makeNode(p, 'hub'));
+          }
+        };
+        for (var guard = 0; hubs.length < hubCount && guard < 300; guard++) {
+          _loop();
+        }
+
+        // ---------- 2. edges ----------
+        var edges = [];
+        var linked = {}; // "a-b" -> true, to avoid duplicate links
+        var linkKey = function linkKey(a, b) {
+          return Math.min(a.id, b.id) + '-' + Math.max(a.id, b.id);
+        };
+        var makeEdge = function makeEdge(kind, from, to, parent) {
+          var len = from.distanceTo(to);
+          var off1 = randVec(len * 0.22);
+          var off2 = randVec(len * 0.22);
+          var curve = new THREE.CubicBezierCurve3(from.clone(), from.clone().lerp(to, 1 / 3).add(off1), from.clone().lerp(to, 2 / 3).add(off2), to.clone());
+          var edge = {
+            kind: kind,
+            curve: curve,
+            off1: off1,
+            off2: off2,
+            to: to,
+            tracked: kind === 'primary',
+            // children inherit phase & speed from their parent, so a signal that reaches a hub
+            // continues into the next layer (looks like data travelling through the network)
+            phase: parent ? parent.phase : Math.random(),
+            speed: parent ? parent.speed : rand(cfg.speed[0], cfg.speed[1]),
+            pts: []
+          };
+          for (var k = 0; k <= cfg.divisions; k++) edge.pts.push(new THREE.Vector3());
+          edges.push(edge);
+          return edge;
+        };
+
+        // layer 0 -> 1 : stone surface -> hubs (these follow the rotating stone every frame)
+        var leaves = [];
+        hubs.forEach(function (hub) {
+          var direction = hub.pos.clone().sub(sphere.center).normalize();
+          sourceRaycaster.set(sphere.center, direction);
+          var sourceHits = sourceRaycaster.intersectObject(stone, true);
+          var start = sourceHits.length ? sourceHits[0].point.clone().add(direction.clone().multiplyScalar(0.35)) : sphere.center.clone().add(direction.clone().multiplyScalar(sphere.radius * 0.72));
+          var primary = makeEdge('primary', start, hub.pos, null);
+          primary.stone = stone;
+          primary.sourceCenterOffset = sourceCenterOffset.clone();
+
+          // layer 1 -> 2 : hub -> leaves
+          var leafCount = randInt(cfg.leafPerHub);
+          for (var n = 0; n < leafCount; n++) {
+            var dir = new THREE.Vector3(rand(-1, 1), rand(-1, 1), rand(-1, 1) * 0.5).normalize();
+            var leafPos = clampToSpace(hub.pos.clone().add(dir.multiplyScalar(rand(cfg.leafDistance[0], cfg.leafDistance[1]))));
+            var leaf = makeNode(leafPos, 'leaf');
+            leaves.push(leaf);
+            linked[linkKey(hub, leaf)] = true;
+            makeEdge('secondary', hub.pos, leaf.pos, primary);
+          }
+        });
+
+        // cross links between neighbouring nodes -> turns the tree into a mesh
+        for (var made = 0, _guard = 0; made < cfg.crossLinks && _guard < 360; _guard++) {
+          var na = nodes[Math.floor(Math.random() * nodes.length)];
+          var nb = nodes[Math.floor(Math.random() * nodes.length)];
+          if (!na || !nb || na === nb || linked[linkKey(na, nb)]) continue;
+          var _dist = na.pos.distanceTo(nb.pos);
+          if (_dist < cfg.crossDistance[0] || _dist > cfg.crossDistance[1]) continue;
+          linked[linkKey(na, nb)] = true;
+          makeEdge('cross', na.pos, nb.pos, null);
+          made++;
+        }
+
+        // ---------- 3. one geometry for all edges ----------
+        var D = cfg.divisions;
+        var P = D + 1;
+        var vertexCount = edges.length * P * 2;
+        var positions = new Float32Array(vertexCount * 3);
+        var tangents = new Float32Array(vertexCount * 3);
+        var colors = new Float32Array(vertexCount * 3);
+        var sides = new Float32Array(vertexCount);
+        var progs = new Float32Array(vertexCount);
+        var params = new Float32Array(vertexCount * 4);
+        var indices = new Uint16Array(edges.length * D * 6);
+
+        // fills positions + tangents of one edge from its curve
+        var sampleEdge = function sampleEdge(edge) {
+          for (var j = 0; j <= D; j++) edge.pts[j].copy(edge.curve.getPoint(j / D));
+          for (var _j = 0; _j <= D; _j++) {
+            var prev = edge.pts[Math.max(_j - 1, 0)];
+            var next = edge.pts[Math.min(_j + 1, D)];
+            var tx = next.x - prev.x,
+              ty = next.y - prev.y,
+              tz = next.z - prev.z;
+            var tl = Math.sqrt(tx * tx + ty * ty + tz * tz) || 1;
+            var p = edge.pts[_j];
+            for (var s = 0; s < 2; s++) {
+              var o = (edge.vertexOffset + _j * 2 + s) * 3;
+              positions[o] = p.x;
+              positions[o + 1] = p.y;
+              positions[o + 2] = p.z;
+              tangents[o] = tx / tl;
+              tangents[o + 1] = ty / tl;
+              tangents[o + 2] = tz / tl;
+            }
+          }
+        };
+        edges.forEach(function (edge, e) {
+          edge.vertexOffset = e * P * 2;
+          var width = cfg.widthPx[edge.kind];
+          var boost = cfg.boost[edge.kind];
+          for (var j = 0; j <= D; j++) {
+            var color = sampleGradient(gradients[edge.kind], j / D);
+            for (var s = 0; s < 2; s++) {
+              var v = edge.vertexOffset + j * 2 + s;
+              colors[v * 3] = color.r;
+              colors[v * 3 + 1] = color.g;
+              colors[v * 3 + 2] = color.b;
+              sides[v] = s === 0 ? -1 : 1;
+              progs[v] = j / D;
+              params[v * 4] = edge.phase;
+              params[v * 4 + 1] = edge.speed;
+              params[v * 4 + 2] = width;
+              params[v * 4 + 3] = boost;
+            }
+          }
+          for (var _j2 = 0; _j2 < D; _j2++) {
+            var a0 = edge.vertexOffset + _j2 * 2;
+            var i = (e * D + _j2) * 6;
+            indices[i] = a0;
+            indices[i + 1] = a0 + 1;
+            indices[i + 2] = a0 + 2;
+            indices[i + 3] = a0 + 1;
+            indices[i + 4] = a0 + 3;
+            indices[i + 5] = a0 + 2;
+          }
+          sampleEdge(edge);
+        });
+        var addAttr = function addAttr(geometry, name, array, size, dynamic) {
+          var attr = new THREE.BufferAttribute(array, size);
+          if (dynamic) {
+            if (attr.setDynamic) attr.setDynamic(true);else if (attr.setUsage && THREE.DynamicDrawUsage) attr.setUsage(THREE.DynamicDrawUsage);
+          }
+          if (geometry.setAttribute) geometry.setAttribute(name, attr);else geometry.addAttribute(name, attr);
+          return attr;
+        };
+        var lineGeometry = new THREE.BufferGeometry();
+        var positionAttr = addAttr(lineGeometry, 'position', positions, 3, true);
+        var tangentAttr = addAttr(lineGeometry, 'aTangent', tangents, 3, true);
+        addAttr(lineGeometry, 'aColor', colors, 3, false);
+        addAttr(lineGeometry, 'aSide', sides, 1, false);
+        addAttr(lineGeometry, 'aProg', progs, 1, false);
+        addAttr(lineGeometry, 'aParams', params, 4, false);
+        lineGeometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        var lineMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: worksEnergyUniforms.uTime,
+            uResolution: worksEnergyUniforms.uResolution,
+            uDepthRef: worksEnergyUniforms.uDepthRef,
+            uOpacity: {
+              value: 0
+            }
+          },
+          vertexShader: worksNetShaders.lineVS,
+          fragmentShader: worksNetShaders.lineFS,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          side: THREE.DoubleSide
+        });
+        var lineMesh = new THREE.Mesh(lineGeometry, lineMaterial);
+        lineMesh.frustumCulled = false; // vertices are updated every frame
+        worksEnergyGroup.add(lineMesh);
+
+        // ---------- 4. glowing nodes ----------
+        var nodePositions = new Float32Array(nodes.length * 3);
+        var nodeColors = new Float32Array(nodes.length * 3);
+        var nodeSizes = new Float32Array(nodes.length);
+        var nodePhases = new Float32Array(nodes.length);
+        nodes.forEach(function (node, i) {
+          nodePositions[i * 3] = node.pos.x;
+          nodePositions[i * 3 + 1] = node.pos.y;
+          nodePositions[i * 3 + 2] = node.pos.z;
+          nodeColors[i * 3] = node.color.r;
+          nodeColors[i * 3 + 1] = node.color.g;
+          nodeColors[i * 3 + 2] = node.color.b;
+          nodeSizes[i] = cfg.nodePx[node.kind] * rand(0.85, 1.15);
+          nodePhases[i] = node.phase;
+        });
+        var nodeGeometry = new THREE.BufferGeometry();
+        addAttr(nodeGeometry, 'position', nodePositions, 3, false);
+        addAttr(nodeGeometry, 'aColor', nodeColors, 3, false);
+        addAttr(nodeGeometry, 'aSize', nodeSizes, 1, false);
+        addAttr(nodeGeometry, 'aPhase', nodePhases, 1, false);
+        var nodeMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: worksEnergyUniforms.uTime,
+            uDepthRef: worksEnergyUniforms.uDepthRef,
+            uOpacity: {
+              value: 0
+            }
+          },
+          vertexShader: worksNetShaders.nodeVS,
+          fragmentShader: worksNetShaders.nodeFS,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+        var nodePoints = new THREE.Points(nodeGeometry, nodeMaterial);
+        nodePoints.frustumCulled = false;
+        worksEnergyGroup.add(nodePoints);
+
+        // ---------- 5. state used by updateWorksEnergyConnections ----------
+        worksEnergyNet = {
+          positionAttr: positionAttr,
+          tangentAttr: tangentAttr,
+          sampleEdge: sampleEdge,
+          raycaster: sourceRaycaster
+        };
+        worksEnergyConnections = edges.filter(function (edge) {
+          return edge.tracked;
+        });
+        TweenMax.to(lineMaterial.uniforms.uOpacity, 0.6, {
+          value: 1,
+          ease: Power2.easeOut
+        });
+        TweenMax.to(nodeMaterial.uniforms.uOpacity, 0.6, {
+          value: 1,
+          delay: 0.15,
+          ease: Power2.easeOut
+        });
+      }
+      function updateWorksEnergyConnections(currentTime) {
+        if (!worksEnergyGroup || !worksEnergyGroup.visible || !worksEnergyNet) return;
+        worksEnergyUniforms.uTime.value = currentTime;
+        worksEnergyUniforms.uResolution.value.set(renderer.domElement.width, renderer.domElement.height);
+        if (!worksEnergyConnections.length) return;
+        var net = worksEnergyNet;
+        worksEnergyConnections.forEach(function (edge) {
+          // keep the start glued to the visible surface of the rotating stone
+          var center = edge.stone.getWorldPosition(new THREE.Vector3()).add(edge.sourceCenterOffset);
+          var direction = edge.to.pos ? edge.to.pos : edge.to;
+          var dir = direction.clone().sub(center).normalize();
+          net.raycaster.set(center, dir);
+          var hits = net.raycaster.intersectObject(edge.stone, true);
+          var start = hits.length ? hits[0].point.clone().add(dir.clone().multiplyScalar(0.35)) : center.clone().add(dir.clone().multiplyScalar(1));
+          var end = edge.curve.v3;
+          edge.curve.v0.copy(start);
+          edge.curve.v1.copy(start).lerp(end, 1 / 3).add(edge.off1);
+          edge.curve.v2.copy(start).lerp(end, 2 / 3).add(edge.off2);
+          net.sampleEdge(edge);
+        });
+        net.positionAttr.needsUpdate = true;
+        net.tangentAttr.needsUpdate = true;
+      }
+      function hideWorksEnergyConnections() {
+        if (!worksEnergyGroup) return;
+        var groupToRemove = worksEnergyGroup;
+        worksEnergyGroup = null;
+        worksEnergyConnections = [];
+        worksEnergyNet = null;
+        var materials = [];
+        groupToRemove.children.forEach(function (child) {
+          if (child.material) materials.push(child.material);
+        });
+        var remaining = materials.length;
+        if (!remaining) {
+          if (groupToRemove.parent) groupToRemove.parent.remove(groupToRemove);
+          return;
+        }
+        materials.forEach(function (material) {
+          // ShaderMaterials of the network fade through their own "uOpacity" uniform
+          var isShader = !!(material.uniforms && material.uniforms.uOpacity);
+          var fadeVars = isShader ? {
+            value: 0
+          } : {
+            opacity: 0
+          };
+          fadeVars.ease = Power2.easeIn;
+          fadeVars.onComplete = function () {
+            remaining--;
+            if (remaining === 0) {
+              groupToRemove.children.forEach(function (child) {
+                if (child.geometry && child.geometry.dispose) child.geometry.dispose();
+                if (child.material && child.material.dispose) child.material.dispose();
+              });
+              if (groupToRemove.parent) groupToRemove.parent.remove(groupToRemove);
+            }
+          };
+          TweenMax.to(isShader ? material.uniforms.uOpacity : material, 0.28, fadeVars);
+        });
+      }
+      function animateWorksStoneHover(stone) {
+        if (!stone) return;
+        stone.userData = stone.userData || {};
+        if (!stone.userData.hoverRotation) {
+          stone.userData.hoverRotation = {
+            y: stone.rotation.y,
+            z: stone.rotation.z
+          };
+        }
+        TweenMax.killTweensOf(stone.scale);
+        TweenMax.killTweensOf(stone.rotation);
+        TweenMax.to(stone.scale, .55, {
+          x: 195,
+          y: 195,
+          z: 195,
+          ease: Sine.easeInOut,
+          repeat: -1,
+          yoyo: true
+        });
+        TweenMax.to(stone.rotation, .7, {
+          y: stone.userData.hoverRotation.y + .32,
+          z: stone.userData.hoverRotation.z + .12,
+          ease: Sine.easeInOut,
+          repeat: -1,
+          yoyo: true
+        });
+      }
+      function resetWorksStoneHover(stone) {
+        if (!stone) return;
+        TweenMax.killTweensOf(stone.scale);
+        TweenMax.killTweensOf(stone.rotation);
+        TweenMax.to(stone.scale, .3, {
+          x: stone.origData ? stone.origData.sx : 1,
+          y: stone.origData ? stone.origData.sy : 1,
+          z: stone.origData ? stone.origData.sz : 1,
+          ease: Power2.easeOut
+        });
+        if (stone.userData && stone.userData.hoverRotation) {
+          TweenMax.to(stone.rotation, .3, {
+            y: stone.userData.hoverRotation.y,
+            z: stone.userData.hoverRotation.z,
+            ease: Power2.easeOut
+          });
+        }
+      }
+      function animateNavBallHover(ball) {
+        if (!ball || !ball.origData) return;
+        TweenMax.killTweensOf(ball.scale);
+        TweenMax.killTweensOf(ball.rotation);
+        if (ball.userData && ball.userData.navHoverReset) {
+          ball.userData.navHoverReset.kill();
+          ball.userData.navHoverReset = null;
+        }
+
+        // Keep the ball visibly enlarged while it continuously changes shape.
+        TweenMax.fromTo(ball.scale, .38, {
+          x: ball.origData.sx * 1.32,
+          y: ball.origData.sy * 1.32,
+          z: ball.origData.sz * 1.32
+        }, {
+          x: ball.origData.sx * 1.58,
+          y: ball.origData.sy * .92,
+          z: ball.origData.sz * 1.58,
+          ease: Power2.easeInOut,
+          repeat: -1,
+          yoyo: true
+        });
+        TweenMax.to(ball.rotation, .48, {
+          z: ball.origData.rz + .14,
+          ease: Sine.easeInOut,
+          repeat: -1,
+          yoyo: true
+        });
+
+        // It will automatically return to normal after 3 seconds
+        ball.userData = ball.userData || {};
+        ball.userData.navHoverReset = TweenMax.delayedCall(3, function () {
+          resetNavBallHover(ball);
+        });
+      }
+      function resetNavBallHover(ball) {
+        if (!ball || !ball.origData) return;
+        TweenMax.killTweensOf(ball.scale);
+        TweenMax.killTweensOf(ball.rotation);
+        TweenMax.to(ball.scale, .25, {
+          x: ball.origData.sx,
+          y: ball.origData.sy,
+          z: ball.origData.sz,
+          ease: Power2.easeOut
+        });
+        TweenMax.to(ball.rotation, .25, {
+          x: ball.origData.rx,
+          y: ball.origData.ry,
+          z: ball.origData.rz,
+          ease: Power2.easeOut
+        });
       }
 
       /*
@@ -3315,6 +4166,9 @@ var MAIN = function (module, $, window, document) {
        * @return {Void}
        */
       function shotWorks() {
+        var _direct = __quickNavDirect; // jumped here from the bottom navigation
+        var _cave = modalObjMainCave.origData; // absolute start point (independent of where the cave is now)
+
         console.log('%c Works', 'color: green;');
 
         //---
@@ -3389,11 +4243,14 @@ var MAIN = function (module, $, window, document) {
         // 	
         //3d modal cave animation
         setTimeout(function () {
-          sceneMainCaveControl('open', null);
+          if (!_direct) sceneMainCaveControl('open', null);
         }, 500);
-        TweenMax.to(modalObjMainCave.position, 1.2, {
+        TweenMax.to(modalObjMainCave.position, 1.2, _objectSpread(_objectSpread({}, _direct ? {
+          y: _cave.y - 20
+        } : {
           z: '+=' + 300,
-          y: '+=' + -20,
+          y: '+=' + -20
+        }), {}, {
           onComplete: function onComplete() {
             TweenMax.to(this.target, 1.2, {
               delay: 0.5,
@@ -3422,7 +4279,7 @@ var MAIN = function (module, $, window, document) {
               }
             });
           }
-        });
+        }));
       }
 
       /*
@@ -3431,6 +4288,9 @@ var MAIN = function (module, $, window, document) {
        * @return {Void}
        */
       function shotAbout() {
+        var _direct = __quickNavDirect; // jumped here from the bottom navigation
+        var _cave = modalObjMainCave.origData; // absolute start point (independent of where the cave is now)
+
         console.log('%c About', 'color: green;');
 
         //---
@@ -3487,11 +4347,14 @@ var MAIN = function (module, $, window, document) {
         // 	
         //3d modal cave animation
         setTimeout(function () {
-          sceneMainCaveControl('open', null);
+          if (!_direct) sceneMainCaveControl('open', null);
         }, 500);
-        TweenMax.to(modalObjMainCave.position, 1.2, {
+        TweenMax.to(modalObjMainCave.position, 1.2, _objectSpread(_objectSpread({}, _direct ? {
+          y: _cave.y - 20
+        } : {
           z: '+=' + 300,
-          y: '+=' + -20,
+          y: '+=' + -20
+        }), {}, {
           onComplete: function onComplete() {
             TweenMax.to(this.target, 1.2, {
               delay: 0.5,
@@ -3517,7 +4380,7 @@ var MAIN = function (module, $, window, document) {
               }
             });
           }
-        });
+        }));
       }
 
       /*
@@ -3526,6 +4389,9 @@ var MAIN = function (module, $, window, document) {
        * @return {Void}
        */
       function shotContact() {
+        var _direct = __quickNavDirect; // jumped here from the bottom navigation
+        var _cave = modalObjMainCave.origData; // absolute start point (independent of where the cave is now)
+
         console.log('%c Contact', 'color: green;');
 
         //---
@@ -3574,14 +4440,8 @@ var MAIN = function (module, $, window, document) {
         });
 
         //---
-        // 
-        //get elements from scene
-        var _ballDoNotMovePosAtoms = [],
-          _ballDoNotMoveScaleAtoms = [];
-        pinprickBallAtoms.forEach(function (el, index) {
-          _ballDoNotMovePosAtoms.push(el.position);
-          _ballDoNotMoveScaleAtoms.push(el.scale);
-        });
+        // Ensure legacy spike-ball group stays hidden
+        pinprickBallGroup.visible = false;
 
         //---
         // 
@@ -3595,80 +4455,91 @@ var MAIN = function (module, $, window, document) {
         // 
         // Contact plane material
         // create the video element
-        var videoContact = document.createElement('video');
-        videoContact.src = videos[1];
-        var videoContactTexture = new THREE.VideoTexture(videoContact);
-        videoContactTexture.minFilter = THREE.LinearFilter;
-        videoContactTexture.magFilter = THREE.LinearFilter;
-        videoContactTexture.format = THREE.RGBFormat;
+        if (!contactCirclePlane || !contactTrianglePlane) {
+          //first time only: create once and reuse (previously every visit created a new
+          //video + texture + 2 meshes that were never removed from the scene)
+          var videoContact = document.createElement('video');
+          videoContact.src = videos[1];
+          var videoContactTexture = new THREE.VideoTexture(videoContact);
+          videoContactTexture.minFilter = THREE.LinearFilter;
+          videoContactTexture.magFilter = THREE.LinearFilter;
+          videoContactTexture.format = THREE.RGBFormat;
 
-        // pause the video
-        videoContactTexture.image.autoplay = true;
-        videoContactTexture.image.loop = true;
-        videoContactTexture.image.currentTime = 0;
-        videoContactTexture.image.muted = true;
-        videoContactTexture.image.play();
+          // pause the video
+          videoContactTexture.image.autoplay = true;
+          videoContactTexture.image.loop = true;
+          videoContactTexture.image.currentTime = 0;
+          videoContactTexture.image.muted = true;
+          videoContactTexture.image.play();
 
-        //
-        uniformsContactCirclePlane = {
-          uTexture: {
-            value: videoContactTexture
-          },
-          uOffset: {
-            //distortion strength
-            value: new THREE.Vector2(-6, -5.3)
-          },
-          uAlpha: {
-            //opacity
-            value: 0
-          }
-        };
-        var contactCirclePlaneMaterial = new THREE.ShaderMaterial({
-          uniforms: uniformsContactCirclePlane,
-          vertexShader: vertex_distortion,
-          fragmentShader: fragment_distortion,
-          transparent: true
-        });
+          //
+          uniformsContactCirclePlane = {
+            uTexture: {
+              value: videoContactTexture
+            },
+            uOffset: {
+              //distortion strength
+              value: new THREE.Vector2(-6, -5.3)
+            },
+            uAlpha: {
+              //opacity
+              value: 0
+            }
+          };
+          var contactCirclePlaneMaterial = new THREE.ShaderMaterial({
+            uniforms: uniformsContactCirclePlane,
+            vertexShader: vertex_distortion,
+            fragmentShader: fragment_distortion,
+            transparent: true
+          });
 
-        //---
-        // 
-        // Circle plane
-        contactCirclePlane = new THREE.Mesh(new THREE.CircleGeometry(12, 32), contactCirclePlaneMaterial);
-        contactCirclePlane.receiveShadow = true;
-        scene.add(contactCirclePlane);
+          //---
+          // 
+          // Circle plane
+          contactCirclePlane = new THREE.Mesh(new THREE.CircleGeometry(12, 32), contactCirclePlaneMaterial);
+          contactCirclePlane.receiveShadow = true;
+          scene.add(contactCirclePlane);
 
-        //---
-        // 
-        // Triangle plane
-        uniformsContactTrianglePlane = {
-          uTexture: {
-            value: videoContactTexture
-          },
-          uOffset: {
-            //distortion strength
-            value: new THREE.Vector2(-6, -5.3)
-          },
-          uAlpha: {
-            //opacity
-            value: 0
-          }
-        };
-        var contactTrianglePlaneMaterial = new THREE.ShaderMaterial({
-          uniforms: uniformsContactTrianglePlane,
-          vertexShader: vertex_distortion,
-          fragmentShader: fragment_distortion,
-          transparent: true
-        });
-        contactTrianglePlane = new THREE.Mesh(new THREE.CircleGeometry(7, 0), contactTrianglePlaneMaterial);
-        scene.add(contactTrianglePlane);
-        contactTrianglePlane.receiveShadow = true;
-        scene.add(contactTrianglePlane);
+          //---
+          // 
+          // Triangle plane
+          uniformsContactTrianglePlane = {
+            uTexture: {
+              value: videoContactTexture
+            },
+            uOffset: {
+              //distortion strength
+              value: new THREE.Vector2(-6, -5.3)
+            },
+            uAlpha: {
+              //opacity
+              value: 0
+            }
+          };
+          var contactTrianglePlaneMaterial = new THREE.ShaderMaterial({
+            uniforms: uniformsContactTrianglePlane,
+            vertexShader: vertex_distortion,
+            fragmentShader: fragment_distortion,
+            transparent: true
+          });
+          contactTrianglePlane = new THREE.Mesh(new THREE.CircleGeometry(7, 0), contactTrianglePlaneMaterial);
+          scene.add(contactTrianglePlane);
+          contactTrianglePlane.receiveShadow = true;
+          scene.add(contactTrianglePlane);
+        } else {
+          //reuse: just reset to the initial hidden state
+          TweenMax.killTweensOf([uniformsContactCirclePlane.uAlpha, uniformsContactTrianglePlane.uAlpha, uniformsContactCirclePlane.uOffset.value, uniformsContactTrianglePlane.uOffset.value]);
+          uniformsContactCirclePlane.uAlpha.value = 0;
+          uniformsContactTrianglePlane.uAlpha.value = 0;
+          uniformsContactCirclePlane.uOffset.value.set(-6, -5.3);
+          uniformsContactTrianglePlane.uOffset.value.set(-6, -5.3);
+        }
 
         //---
         // 	
         //3d modal cave animation
         setTimeout(function () {
-          sceneMainCaveControl('open', null);
+          if (!_direct) sceneMainCaveControl('open', null);
         }, 500);
 
         //---
@@ -3678,10 +4549,12 @@ var MAIN = function (module, $, window, document) {
           _row = 5;
 
         //
-        TweenMax.to(modalObjMainCave.position, 1, {
-          //3d modal cave
+        TweenMax.to(modalObjMainCave.position, 1, _objectSpread(_objectSpread({}, _direct ? {
+          x: _cave.x - 200
+        } : {
           x: '+=' + -200,
-          z: '+=' + 100,
+          z: '+=' + 100
+        }), {}, {
           onComplete: function onComplete() {
             //...
             //Animation of Balls
@@ -3689,27 +4562,36 @@ var MAIN = function (module, $, window, document) {
             __statusBallsRestore = true;
 
             //...
-            //Pinprick Ball
-            TweenMax.to(_ballDoNotMovePosAtoms, 0.5, {
-              y: -yLimit / 3,
-              x: -xLimit / 2,
-              ease: Power2.easeOut
+            //Contact Orbital Signal Rings & Ambient Dust (replaces sudden spike-ball burst)
+            initContactOrbitEffect(_navContactPos);
+            __statusContactOrbitActive = true;
+            contactOrbitGroup.visible = true;
+            TweenMax.killTweensOf(contactOrbitGroup.scale);
+            TweenMax.fromTo(contactOrbitGroup.scale, 1.6, {
+              x: 0.72,
+              y: 0.72,
+              z: 0.72
+            }, {
+              x: 1,
+              y: 1,
+              z: 1,
+              ease: Power3.easeOut
             });
-            TweenMax.to(_ballDoNotMovePosAtoms, 1.5, {
-              delay: .7,
-              x: function x(index, target) {
-                return -Math.random() * xLimit / 2;
-              },
-              ease: Power2.easeOut
+            contactOrbitRings.forEach(function (ring, idx) {
+              TweenMax.killTweensOf(ring.material);
+              TweenMax.to(ring.material, 1.4, {
+                delay: 0.25 + idx * 0.15,
+                opacity: ring.userData.targetOpacity,
+                ease: Power2.easeOut
+              });
             });
-            TweenMax.to(_ballDoNotMoveScaleAtoms, 1.5, {
-              delay: .7,
-              x: function x(index, target) {
-                var _dis = 30;
-                var offset = xLimit / 3 - 350;
-                return index % _column * _dis - offset;
-              },
-              ease: Power2.easeOut
+            contactOrbitParticles.forEach(function (p) {
+              TweenMax.killTweensOf(p.material);
+              TweenMax.to(p.material, 1.5, {
+                delay: 0.4 + Math.random() * 0.4,
+                opacity: p.userData.targetOpacity,
+                ease: Power2.easeOut
+              });
             });
 
             //...
@@ -3738,7 +4620,7 @@ var MAIN = function (module, $, window, document) {
               });
             }, 500);
           }
-        });
+        }));
       }
 
       /*
@@ -3902,35 +4784,138 @@ var MAIN = function (module, $, window, document) {
         }
 
         //...
-        //Pinprick Ball
-        var _ballDoNotMovePosAtoms = [],
-          _ballDoNotMoveScaleAtoms = [];
-        pinprickBallAtoms.forEach(function (el, index) {
-          _ballDoNotMovePosAtoms.push(el.position);
-          _ballDoNotMoveScaleAtoms.push(el.scale);
-        });
-        TweenMax.to(_ballDoNotMoveScaleAtoms, 2, {
-          delay: 0.7,
-          x: 500,
-          ease: Power3.easeIn
-        });
-        TweenMax.to(_ballDoNotMovePosAtoms, 2, {
-          delay: 0.7,
-          x: function x(index, target) {
-            return pinprickBallAtoms[index].origData.x;
-          },
-          y: function y(index, target) {
-            return pinprickBallAtoms[index].origData.y;
-          },
-          onComplate: function onComplate() {
-            TweenMax.to(_ballDoNotMoveScaleAtoms, 1.5, {
-              delay: 0.7,
-              x: scaleMin,
-              ease: Power4.easeOut
+        //Fade out Contact Orbital Signal Rings
+        if (contactOrbitGroup && contactOrbitGroup.visible) {
+          contactOrbitRings.forEach(function (ring) {
+            TweenMax.killTweensOf(ring.material);
+            TweenMax.to(ring.material, 0.9, {
+              opacity: 0,
+              ease: Power2.easeInOut
             });
-          },
-          ease: Power3.easeIn
+          });
+          contactOrbitParticles.forEach(function (p) {
+            TweenMax.killTweensOf(p.material);
+            TweenMax.to(p.material, 0.9, {
+              opacity: 0,
+              ease: Power2.easeInOut
+            });
+          });
+          TweenMax.to(contactOrbitGroup.scale, 1.0, {
+            x: 0.85,
+            y: 0.85,
+            z: 0.85,
+            ease: Power2.easeInOut,
+            onComplete: function onComplete() {
+              __statusContactOrbitActive = false;
+              contactOrbitGroup.visible = false;
+            }
+          });
+        }
+      }
+
+      /*
+       * Build subtle orbital signal rings & drifting stardust for Contact
+       *
+       * @param  {Object} anchorPos - Center coordinates near Contact
+       * @return {Void}
+       */
+      function initContactOrbitEffect(anchorPos) {
+        contactOrbitGroup.position.set(anchorPos.x - 6, anchorPos.y + 2, anchorPos.z + 28);
+        if (contactOrbitRings.length > 0) return;
+        var ringSpecs = [{
+          radius: 24,
+          tube: 0.08,
+          rx: 1.15,
+          ry: 0.35,
+          spinZ: 0.14,
+          color: 0x56c8ff,
+          opacity: 0.32,
+          dashed: false
+        }, {
+          radius: 34,
+          tube: 0.06,
+          rx: 1.02,
+          ry: -0.48,
+          spinZ: -0.10,
+          color: 0x8f7cff,
+          opacity: 0.24,
+          dashed: true
+        }, {
+          radius: 44,
+          tube: 0.05,
+          rx: 1.28,
+          ry: 0.22,
+          spinZ: 0.07,
+          color: 0x35eaff,
+          opacity: 0.16,
+          dashed: false
+        }];
+        ringSpecs.forEach(function (spec) {
+          var ringObj;
+          if (spec.dashed) {
+            var pts = [];
+            var segs = 128;
+            for (var i = 0; i <= segs; i++) {
+              var a = i / segs * Math.PI * 2;
+              pts.push(new THREE.Vector3(Math.cos(a) * spec.radius, Math.sin(a) * spec.radius, 0));
+            }
+            var geo = new THREE.BufferGeometry().setFromPoints(pts);
+            var mat = new THREE.LineDashedMaterial({
+              color: spec.color,
+              dashSize: 1.6,
+              gapSize: 1.4,
+              transparent: true,
+              opacity: 0,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false
+            });
+            ringObj = new THREE.Line(geo, mat);
+            ringObj.computeLineDistances();
+          } else {
+            var _geo2 = new THREE.TorusGeometry(spec.radius, spec.tube, 8, 120);
+            var _mat2 = new THREE.MeshBasicMaterial({
+              color: spec.color,
+              transparent: true,
+              opacity: 0,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false
+            });
+            ringObj = new THREE.Mesh(_geo2, _mat2);
+          }
+          ringObj.rotation.set(spec.rx, spec.ry, Math.random() * Math.PI);
+          ringObj.userData = {
+            baseRx: spec.rx,
+            baseRy: spec.ry,
+            spinZ: spec.spinZ,
+            targetOpacity: spec.opacity
+          };
+          contactOrbitGroup.add(ringObj);
+          contactOrbitRings.push(ringObj);
         });
+
+        // Subtle floating micro-particles orbiting along the planes
+        var pGeo = new THREE.SphereGeometry(0.22, 8, 8);
+        for (var i = 0; i < 26; i++) {
+          var pMat = new THREE.MeshBasicMaterial({
+            color: i % 2 === 0 ? 0x6ae8ff : 0xb388ff,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+          });
+          var pMesh = new THREE.Mesh(pGeo, pMat);
+          pMesh.userData = {
+            theta: Math.random() * Math.PI * 2,
+            radius: 18 + Math.random() * 28,
+            speed: (0.12 + Math.random() * 0.22) * (i % 2 === 0 ? 1 : -1),
+            phase: Math.random() * Math.PI * 2,
+            targetOpacity: 0.35 + Math.random() * 0.45
+          };
+          contactOrbitGroup.add(pMesh);
+          contactOrbitParticles.push(pMesh);
+        }
+        contactOrbitGroup.visible = false;
+        scene.add(contactOrbitGroup);
       }
 
       /*
@@ -4341,6 +5326,9 @@ var MAIN = function (module, $, window, document) {
             //enable scene click
             __statusSceneClickEnable = true;
 
+            //show quick navigation
+            quickNavToggle(true);
+
             //enable scene move
             __statusSceneMove = true;
 
@@ -4581,16 +5569,19 @@ var MAIN = function (module, $, window, document) {
                   var gltfMesh = object.scene;
                   gltfMesh.traverse(function (child) {
                     if (child instanceof THREE.Mesh) {
-                      child.material = new THREE.MeshPhongMaterial({
-                        color: 0xdddddd,
-                        shininess: 1,
+                      child.material = new THREE.MeshPhysicalMaterial({
+                        color: 0xf0f3f8,
+                        metalness: 0.72,
+                        roughness: 0.22,
+                        clearcoat: 1.0,
+                        clearcoatRoughness: 0.12,
+                        emissive: 0x252a32,
+                        emissiveIntensity: 0.45,
                         wireframe: false,
                         map: loaderImage.load(mainConfig.textures[6]),
                         side: THREE.DoubleSide,
-                        fog: false //Excluding objects from fog
+                        fog: false
                       });
-
-                      // set castShadow to object
                       child.castShadow = true;
                     }
                   });
@@ -4806,9 +5797,11 @@ var MAIN = function (module, $, window, document) {
        *
        * @return {Void}
        */
-      function sceneReset() {
+      function sceneReset(callback) {
         //---Reset body class
         $('body').removeClass('primarymenu-active');
+        __currentSection = null;
+        quickNavSetActive(null);
 
         //---Reset brand
         $(brandID).removeClass('scene-start').addClass('scene-end');
@@ -4854,6 +5847,11 @@ var MAIN = function (module, $, window, document) {
 
             //enable scene move
             __statusSceneMove = true;
+
+            //callback after the scene is fully restored
+            if (typeof callback === 'function') {
+              callback();
+            }
           }
         });
 
@@ -6113,7 +7111,7 @@ var MAIN = function (module, $, window, document) {
           TweenMax.to([menuBGGrid.scale, menuBGGrid2.scale], 0.5, {
             delay: 1,
             x: scaleMin,
-            onComplate: function onComplate() {
+            onComplete: function onComplete() {
               //---
               // 	
               //ball
