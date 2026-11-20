@@ -1,0 +1,1 @@
+import{t as e}from"../studio.js";var t;function n(){t||=e()}document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,n,{once:!0}):n();
